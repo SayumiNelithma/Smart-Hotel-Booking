@@ -28,7 +28,7 @@ function CreateHotelPage() {
       value: z.string().min(1, { message: "Description is required" }),
     }),
     image: z.object({
-      value: z.string().min(1, { message: "Image is required" }),
+      value: z.string().min(1, { message: "Images are required" }),
     }),
     location: z.object({
       value: z.string().min(1, { message: "Location is required" }),
