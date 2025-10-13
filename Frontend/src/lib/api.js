@@ -66,9 +66,34 @@ export const api = createApi({
         method: "POST",
         body: review,
       }),
-      invalidatesTags: (result, error, id) => [
-        { type: "Hotels", id: review.hotelId },
+      // use the original argument (arg) to determine which hotel to invalidate
+      invalidatesTags: (result, error, arg) => [
+        { type: "Hotels", id: arg.hotelId },
       ],
+    }),
+    // AI search endpoint on backend: POST /api/hotels/ai
+    aiSearch: build.mutation({
+      query: (queryText) => ({
+        url: "hotels/ai",
+        method: "POST",
+        body: { query: queryText },
+      }),
+    }),
+    // Create booking endpoint: POST /api/bookings
+    createBooking: build.mutation({
+      query: (booking) => ({
+        url: "bookings",
+        method: "POST",
+        body: booking,
+      }),
+      // use the original argument (arg) so we don't reference an undefined variable
+      invalidatesTags: (result, error, arg) => [{ type: "Hotels", id: arg.hotelId }],
+    }),
+    // Get reviews for a hotel: GET /api/reviews/hotel/:hotelId
+    getReviewsForHotel: build.query({
+      query: (hotelId) => `reviews/hotel/${hotelId}`,
+      providesTags: (result, error, id) =>
+        result ? result.map((r) => ({ type: "Reviews", id: r._id })) : [{ type: "Reviews", id: "LIST" }],
     }),
   }),
 });
@@ -83,4 +108,7 @@ export const {
   useAddLocationMutation,
   useGetAllLocationsQuery,
   useAddReviewMutation,
+  useAiSearchMutation,
+  useCreateBookingMutation,
+  useGetReviewsForHotelQuery,
 } = api;

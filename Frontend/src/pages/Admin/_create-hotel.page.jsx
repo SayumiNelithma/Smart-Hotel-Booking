@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { useCreateHotelMutation } from "@/lib/api";
 import { useState } from "react";
 import { z } from "zod";
-
+4
 function CreateHotelPage() {
   const [createHotel, { isLoading }] = useCreateHotelMutation();
 
