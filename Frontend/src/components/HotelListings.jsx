@@ -4,9 +4,92 @@ import { useState } from "react";
 import { toast } from "sonner";
 import LocationTab from "./LocationTab";
 import { Skeleton } from "./ui/skeleton";
+import { useSelector } from "react-redux";
+
+// Helper function to apply AI filters to hotels
+const applyAiFilters = (hotels, aiFilters, aiMatchedHotels = []) => {
+  if (!aiFilters || !hotels) return hotels;
+  
+  console.log("Applying AI filters:", aiFilters);
+  console.log("AI matched hotels:", aiMatchedHotels);
+  console.log("Total hotels before filtering:", hotels.length);
+
+  // If we have AI matched hotels, prioritize them and include them
+  if (aiMatchedHotels && aiMatchedHotels.length > 0) {
+    console.log("Using AI matched hotels as primary results");
+    return aiMatchedHotels;
+  }
+
+  const filteredHotels = hotels.filter((hotel) => {
+    // Price range filter
+    if (aiFilters.priceRange.min !== null && hotel.price < aiFilters.priceRange.min) {
+      return false;
+    }
+    if (aiFilters.priceRange.max !== null && hotel.price > aiFilters.priceRange.max) {
+      return false;
+    }
+
+    // Location filter - more flexible matching
+    if (aiFilters.location) {
+      const hotelLocation = (hotel.location || "").toLowerCase();
+      const filterLocation = aiFilters.location.toLowerCase();
+      
+      console.log(`Checking hotel "${hotel.name}" location: "${hotelLocation}" against filter: "${filterLocation}"`);
+      
+      // Check if location contains the filter term anywhere
+      const locationMatch = hotelLocation.includes(filterLocation);
+      
+      // Also check if it's a country name and look for it in the last part of location (after comma)
+      let countryMatch = false;
+      if (['canada', 'usa', 'united states', 'mexico', 'france', 'italy', 'spain', 'germany', 'japan', 'china', 'australia', 'brazil', 'india', 'thailand', 'singapore', 'dubai'].includes(filterLocation)) {
+        const locationParts = hotelLocation.split(',').map(part => part.trim());
+        countryMatch = locationParts.some(part => part.includes(filterLocation));
+      }
+      
+      if (!locationMatch && !countryMatch) {
+        console.log(`Hotel "${hotel.name}" filtered out - location doesn't match`);
+        return false;
+      }
+    }
+
+    // Amenities filter
+    if (aiFilters.amenities && aiFilters.amenities.length > 0) {
+      const hotelAmenities = (hotel.amenities || []).map(a => a.toLowerCase());
+      const hasRequiredAmenities = aiFilters.amenities.every(amenity => 
+        hotelAmenities.some(hotelAmenity => hotelAmenity.includes(amenity.toLowerCase()))
+      );
+      if (!hasRequiredAmenities) {
+        return false;
+      }
+    }
+
+    // Rating filter
+    if (aiFilters.rating && hotel.rating < aiFilters.rating) {
+      return false;
+    }
+
+    // Keywords filter (search in name and description)
+    if (aiFilters.keywords && aiFilters.keywords.length > 0) {
+      const searchText = `${hotel.name} ${hotel.description || ""}`.toLowerCase();
+      const hasKeywords = aiFilters.keywords.some(keyword => 
+        searchText.includes(keyword.toLowerCase())
+      );
+      if (!hasKeywords) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+  
+  console.log("Hotels after filtering:", filteredHotels.length);
+  return filteredHotels;
+};
 
 function HotelListings() {
   const [selectedLocation, setSelectedLocation] = useState(0);
+  const aiFilters = useSelector((state) => state.search.aiFilters);
+  const aiMatchedHotels = useSelector((state) => state.search.aiMatchedHotels);
 
   const {
     data: hotels,
@@ -34,7 +117,8 @@ function HotelListings() {
     (el) => selectedLocation === el._id
   ).name;
 
-  const filteredHotels =
+  // First apply location filter, then apply AI filters
+  const locationFilteredHotels =
     selectedLocation === 0
       ? hotels
       : hotels.filter((hotel) => {
@@ -42,6 +126,10 @@ function HotelListings() {
           const country = parts[parts.length - 1]?.trim().toLowerCase();
           return country === selectedLocationName?.trim().toLowerCase();
         });
+
+  // Apply AI filters to the location-filtered hotels
+  console.log("Sample hotel locations:", hotels?.slice(0, 3).map(h => ({ name: h.name, location: h.location })));
+  const filteredHotels = applyAiFilters(locationFilteredHotels, aiFilters, aiMatchedHotels);
 
   const isLoading = isHotelsLoading || isLocationsLoading;
   const isError = isHotelsError || isLocationsError;

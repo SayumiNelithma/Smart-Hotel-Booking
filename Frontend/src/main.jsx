@@ -20,6 +20,8 @@ import "./index.css";
 import ProtectLayout from "./components/layouts/protect.layout.jsx";
 import AdminProtectLayout from "./components/layouts/AdminProtectLayout.jsx";
 import CreateHotelPage from "./pages/Admin/create-hotel.page.jsx";
+import AdminBookingsPage from "./pages/Admin/bookings.page.jsx";
+import ProfileBookingsPage from "./pages/profile/bookings.page.jsx";
 
 const clerkPublishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 if (!clerkPublishableKey) {
@@ -43,6 +45,10 @@ createRoot(document.getElementById("root")).render(
               </Route>
               <Route element={<AdminProtectLayout />}>
                 <Route path="/admin/create-hotel" element={<CreateHotelPage />} />
+                <Route path="/admin/bookings" element={<AdminBookingsPage />} />
+              </Route>
+              <Route element={<ProtectLayout />}>
+                <Route path="/account/bookings" element={<ProfileBookingsPage />} />
               </Route>
             </Route>
             <Route path="*" element={<NotFoundPage />} />

@@ -22,9 +22,15 @@ function HotelCard(props) {
   return (
     <Link to={`/hotels/${props.hotel._id}`} className="block group relative">
       <div className="relative aspect-[4/3] overflow-hidden rounded-xl">
+        {console.debug && console.debug("HotelCard image:", props.hotel._id, props.hotel.image)}
         <img
-          src={props.hotel.image}
+          src={String(props.hotel.image || "https://via.placeholder.com/640x480?text=Hotel+image")}
           alt={props.hotel.name}
+          loading="lazy"
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = "https://via.placeholder.com/640x480?text=No+image";
+          }}
           className="object-cover w-full h-full absolute transition-transform group-hover:scale-105"
         />
       </div>

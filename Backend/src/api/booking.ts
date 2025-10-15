@@ -1,15 +1,16 @@
 import express from "express";
-import { createBooking, getMyBookings } from "../application/booking";
 import isAuthenticated from "./middleware/authentication-middleware";
+import { createBooking, getMyBookings, getAllBookings } from "../application/booking";
 
 const bookingRouter = express.Router();
 
-bookingRouter.route("/")
-  .post(isAuthenticated, createBooking);
+// Create booking (authenticated users)
+bookingRouter.post("/", isAuthenticated, createBooking);
 
-bookingRouter.route("/me")
-  .get(isAuthenticated, getMyBookings);
+// Get bookings of the logged-in user
+bookingRouter.get("/me", isAuthenticated, getMyBookings);
+
+// Get all bookings (public)
+bookingRouter.get("/", getAllBookings);
 
 export default bookingRouter;
-
-

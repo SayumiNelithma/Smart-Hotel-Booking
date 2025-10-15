@@ -1,13 +1,14 @@
 import { Button } from "@/components/ui/button";
-import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
-import { Globe, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { SignedIn, SignedOut, UserButton, useUser } from "@clerk/clerk-react";
+import { Globe, Menu, X, Calendar } from "lucide-react";
+import { useState, useRef } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router";
 
 function Navigation() {
-  //   const { user } = useUser();
+  const { user } = useUser();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef(null);
   //   const menuRef = useRef(null);
     // const buttonRef = useRef(null);
 
@@ -106,6 +107,19 @@ function Navigation() {
         </Button> */}
         <SignedIn>
           <UserButton />
+          {user?.publicMetadata?.role !== "admin" && (
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="text-xs hidden md:flex"
+            >
+              <Link to="/account/bookings" className="flex items-center">
+                <Calendar className="h-4 w-4 mr-2" />
+                My Bookings
+              </Link>
+            </Button>
+          )}
           <Button
             size="sm"
             asChild
@@ -118,24 +132,15 @@ function Navigation() {
         {/* Mobile Menu Button */}
         <div className="relative md:hidden">
           <Button
-            // ref={buttonRef}
             variant="ghost"
             size="icon"
             className="relative z-20"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-expanded={isMenuOpen}
           >
-            {isMenuOpen ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <Menu className="h-5 w-5" />
-            )}
-            <span className="sr-only">
-              {isMenuOpen ? "Close menu" : "Open menu"}
-            </span>
+            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
 
-          {/* Dropdown Menu */}
           {isMenuOpen && (
             <div
               ref={menuRef}
@@ -168,23 +173,7 @@ function Navigation() {
                   <Globe className="h-4 w-4 mr-2" />
                   EN
                 </Button>
-                {/* <SignedOut>
-                  <a
-                    href="/sign-in"
-                    className="text-sm font-medium hover:text-gray-300 transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Log In
-                  </a>
-                  <Button
-                    size="sm"
-                    className="bg-white text-black hover:bg-gray-200 w-full mt-2"
-                    asChild
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    <Link to="/sign-up">Sign Up</Link>
-                  </Button>
-                </SignedOut> */}
+
                 <a
                   href="/sign-in"
                   className="text-sm font-medium hover:text-gray-300 transition-colors"
@@ -192,6 +181,7 @@ function Navigation() {
                 >
                   Log In
                 </a>
+
                 <Button
                   size="sm"
                   className="bg-white text-black hover:bg-gray-200 w-full mt-2"
@@ -200,16 +190,26 @@ function Navigation() {
                 >
                   <a to="/sign-up">Sign Up</a>
                 </Button>
-                {/* <SignedIn>
-                  <Button
-                    size="sm"
-                    className="bg-white text-black hover:bg-gray-200 w-full mt-2"
-                    asChild
+
+                {/* Show My Bookings only for signed-in non-admin users */}
+                <SignedIn>
+                  {user?.publicMetadata?.role !== "admin" && (
+                    <a
+                      href="/account/bookings"
+                      className="text-sm font-medium hover:text-gray-300 transition-colors"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      My Bookings
+                    </a>
+                  )}
+                  <a
+                    href="/account"
+                    className="text-sm font-medium hover:text-gray-300 transition-colors"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    <Link to="/account">My Account</Link>
-                  </Button>
-                </SignedIn> */}
+                    My Account
+                  </a>
+                </SignedIn>
               </div>
             </div>
           )}

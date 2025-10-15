@@ -13,7 +13,10 @@ export const api = createApi({
           const clerk = window.Clerk;
           if (clerk) {
             const token = await clerk.session?.getToken();
-            headers.set("Authorization", `Bearer ${token}`);
+            // Only set Authorization header when a valid token string is returned
+            if (token) {
+              headers.set("Authorization", `Bearer ${token}`);
+            }
             resolve(headers);
           } else {
             setTimeout(checkToken, 500);
@@ -72,11 +75,12 @@ export const api = createApi({
       ],
     }),
     // AI search endpoint on backend: POST /api/hotels/ai
+    // Accepts payload: { query: string, preferences?: object, filters?: object }
     aiSearch: build.mutation({
-      query: (queryText) => ({
+      query: (payload) => ({
         url: "hotels/ai",
         method: "POST",
-        body: { query: queryText },
+        body: payload,
       }),
     }),
     // Create booking endpoint: POST /api/bookings
@@ -88,6 +92,18 @@ export const api = createApi({
       }),
       // use the original argument (arg) so we don't reference an undefined variable
       invalidatesTags: (result, error, arg) => [{ type: "Hotels", id: arg.hotelId }],
+    }),
+    // Admin: get all bookings
+    getAllBookings: build.query({
+      query: () => `bookings`,
+      providesTags: (result, error, id) =>
+        result ? result.map((b) => ({ type: "Bookings", id: b._id })) : [{ type: "Bookings", id: "LIST" }],
+    }),
+    // Get bookings for the authenticated user
+    getMyBookings: build.query({
+      query: () => `bookings/me`,
+      providesTags: (result, error, id) =>
+        result ? result.map((b) => ({ type: "Bookings", id: b._id })) : [{ type: "Bookings", id: "LIST" }],
     }),
     // Get reviews for a hotel: GET /api/reviews/hotel/:hotelId
     getReviewsForHotel: build.query({
@@ -110,5 +126,7 @@ export const {
   useAddReviewMutation,
   useAiSearchMutation,
   useCreateBookingMutation,
+  useGetAllBookingsQuery,
+  useGetMyBookingsQuery,
   useGetReviewsForHotelQuery,
 } = api;
