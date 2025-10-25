@@ -111,6 +111,34 @@ export const api = createApi({
       providesTags: (result, error, id) =>
         result ? result.map((r) => ({ type: "Reviews", id: r._id })) : [{ type: "Reviews", id: "LIST" }],
     }),
+    // Get booking by ID: GET /api/bookings/:bookingId
+    getBookingById: build.query({
+      query: (bookingId) => `bookings/${bookingId}`,
+      providesTags: (result, error, id) => [{ type: "Bookings", id }],
+    }),
+    // Cancel booking: PATCH /api/bookings/:bookingId/cancel
+    cancelBooking: build.mutation({
+      query: (bookingId) => ({
+        url: `bookings/${bookingId}/cancel`,
+        method: "PATCH",
+      }),
+      invalidatesTags: (result, error, bookingId) => [
+        { type: "Bookings", id: bookingId },
+        { type: "Bookings", id: "LIST" },
+      ],
+    }),
+    // Update booking: PATCH /api/bookings/:bookingId
+    updateBooking: build.mutation({
+      query: ({ bookingId, ...updates }) => ({
+        url: `bookings/${bookingId}`,
+        method: "PATCH",
+        body: updates,
+      }),
+      invalidatesTags: (result, error, { bookingId }) => [
+        { type: "Bookings", id: bookingId },
+        { type: "Bookings", id: "LIST" },
+      ],
+    }),
   }),
 });
 
@@ -129,4 +157,7 @@ export const {
   useGetAllBookingsQuery,
   useGetMyBookingsQuery,
   useGetReviewsForHotelQuery,
+  useGetBookingByIdQuery,
+  useCancelBookingMutation,
+  useUpdateBookingMutation,
 } = api;
