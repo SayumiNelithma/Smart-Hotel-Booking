@@ -4,13 +4,22 @@ import { cn } from "@/lib/utils"
 
 function Card({
   className,
+  variant = "default",
   ...props
 }) {
+  const variants = {
+    default: "bg-card text-card-foreground border shadow-sm hover:shadow-md",
+    glass: "glass text-card-foreground border-0 hover:glass-strong",
+    neomorphism: "neomorphism text-card-foreground border-0",
+    elevated: "bg-card text-card-foreground border shadow-lg hover:shadow-xl",
+  };
+  
   return (
     (<div
       data-slot="card"
       className={cn(
-        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
+        "flex flex-col gap-6 rounded-xl py-6 transition-all duration-200 theme-transition",
+        variants[variant] || variants.default,
         className
       )}
       {...props} />)

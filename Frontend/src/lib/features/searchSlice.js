@@ -40,10 +40,21 @@ export const searchSlice = createSlice({
     resetQuery: (state) => {
       state.query = "";
     },
+    clearSearch: (state) => {
+      state.query = "";
+      state.aiMatchedHotels = [];
+      state.aiFilters = {
+        priceRange: { min: null, max: null },
+        location: null,
+        amenities: [],
+        rating: null,
+        keywords: []
+      };
+    },
   },
 });
 
 // Action creators are generated for each case reducer function
-export const { setQuery, resetQuery, setAiMatchedHotels, clearAiMatchedHotels, setAiFilters, clearAiFilters } = searchSlice.actions;
+export const { setQuery, resetQuery, setAiMatchedHotels, clearAiMatchedHotels, setAiFilters, clearAiFilters, clearSearch } = searchSlice.actions;
 
 export default searchSlice.reducer;

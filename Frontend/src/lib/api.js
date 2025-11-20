@@ -28,8 +28,21 @@ export const api = createApi({
   }),
   endpoints: (build) => ({
     getAllHotels: build.query({
-      query: () => "hotels",
-      providesTags: (result, error, id) => [{ type: "Hotels", id: "LIST" }],
+      query: (params = {}) => {
+        const searchParams = new URLSearchParams();
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== "") {
+            if (Array.isArray(value)) {
+              value.forEach((v) => searchParams.append(key, v));
+            } else {
+              searchParams.append(key, value);
+            }
+          }
+        });
+        const queryString = searchParams.toString();
+        return `hotels${queryString ? `?${queryString}` : ""}`;
+      },
+      providesTags: (result, error, params) => [{ type: "Hotels", id: "LIST" }],
     }),
     getHotelsBySearch: build.query({
       query: (search) => `hotels/search?query=${search}`,
@@ -116,6 +129,11 @@ export const api = createApi({
       query: (bookingId) => `bookings/${bookingId}`,
       providesTags: (result, error, id) => [{ type: "Bookings", id }],
     }),
+    // Get booking by Stripe session ID: GET /api/bookings/session/:sessionId
+    getBookingBySessionId: build.query({
+      query: (sessionId) => `bookings/session/${sessionId}`,
+      providesTags: (result, error, sessionId) => [{ type: "Bookings", id: result?._id }],
+    }),
     // Cancel booking: PATCH /api/bookings/:bookingId/cancel
     cancelBooking: build.mutation({
       query: (bookingId) => ({
@@ -133,6 +151,30 @@ export const api = createApi({
         url: `bookings/${bookingId}`,
         method: "PATCH",
         body: updates,
+      }),
+      invalidatesTags: (result, error, { bookingId }) => [
+        { type: "Bookings", id: bookingId },
+        { type: "Bookings", id: "LIST" },
+      ],
+    }),
+    // Confirm booking: PATCH /api/bookings/:bookingId/confirm
+    confirmBooking: build.mutation({
+      query: ({ bookingId, emailMessage }) => ({
+        url: `bookings/${bookingId}/confirm`,
+        method: "PATCH",
+        body: { emailMessage },
+      }),
+      invalidatesTags: (result, error, { bookingId }) => [
+        { type: "Bookings", id: bookingId },
+        { type: "Bookings", id: "LIST" },
+      ],
+    }),
+    // Update booking status: PATCH /api/bookings/:bookingId/status
+    updateBookingStatus: build.mutation({
+      query: ({ bookingId, status }) => ({
+        url: `bookings/${bookingId}/status`,
+        method: "PATCH",
+        body: { status },
       }),
       invalidatesTags: (result, error, { bookingId }) => [
         { type: "Bookings", id: bookingId },
@@ -158,6 +200,9 @@ export const {
   useGetMyBookingsQuery,
   useGetReviewsForHotelQuery,
   useGetBookingByIdQuery,
+  useGetBookingBySessionIdQuery,
   useCancelBookingMutation,
   useUpdateBookingMutation,
+  useConfirmBookingMutation,
+  useUpdateBookingStatusMutation,
 } = api;

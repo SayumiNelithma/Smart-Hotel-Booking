@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Sparkles, Loader2, X } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAiSearchMutation } from "@/lib/api";
 import HotelCard from "@/components/HotelCard";
 import {
@@ -11,6 +11,7 @@ import {
   clearAiMatchedHotels,
   setAiFilters,
   clearAiFilters,
+  clearSearch,
 } from "@/lib/features/searchSlice";
 
 // Helper function to extract filter criteria from AI response
@@ -122,6 +123,11 @@ export default function AISearch() {
   const [page, setPage] = useState(1);
   const [aiSearch, { isLoading }] = useAiSearchMutation();
   const aiFilters = useSelector((state) => state.search.aiFilters);
+  const searchQuery = useSelector((state) => state.search.query);
+  const aiMatchedHotels = useSelector((state) => state.search.aiMatchedHotels);
+  
+  // Check if we're in search mode
+  const isSearchMode = searchQuery && searchQuery.trim() !== "" && (aiMatchedHotels.length > 0 || matchedHotels.length > 0 || totalCount > 0);
 
   async function handleSearch() {
     const trimmed = value.trim();
@@ -186,6 +192,34 @@ export default function AISearch() {
     }
   }
 
+  // Clear search function
+  const handleClearSearch = useCallback(() => {
+    setValue("");
+    setResponseText("");
+    setRecommendations([]);
+    setMatchedHotels([]);
+    setResults([]);
+    setTotalCount(0);
+    setPage(1);
+    dispatch(clearSearch());
+  }, [dispatch]);
+
+  // Handle Escape key to clear search
+  useEffect(() => {
+    function handleKeyDown(event) {
+      if (event.key === "Escape" && isSearchMode) {
+        handleClearSearch();
+      }
+    }
+
+    if (isSearchMode) {
+      document.addEventListener("keydown", handleKeyDown);
+      return () => {
+        document.removeEventListener("keydown", handleKeyDown);
+      };
+    }
+  }, [isSearchMode, handleClearSearch]);
+
   return (
     <div className="z-10 w-full max-w-lg">
       {/* Search Bar */}
@@ -198,24 +232,37 @@ export default function AISearch() {
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
         />
-        <Button
-          type="button"
-          onClick={handleSearch}
-          disabled={isLoading || !value.trim()}
-          className="absolute right-2 h-[80%] bg-black text-white rounded-full px-4 flex items-center gap-x-2 border-white border-2 hover:bg-black/80 hover:ring-2 hover:ring-white/50"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span className="text-sm">Searching…</span>
-            </>
-          ) : (
-            <>
-              <Sparkles className="w-4 h-4 fill-white" />
-              <span className="text-sm">AI Search</span>
-            </>
+        <div className="absolute right-2 flex items-center gap-2 h-[80%]">
+          {isSearchMode && (
+            <Button
+              type="button"
+              onClick={handleClearSearch}
+              className="h-full bg-white/10 text-white rounded-full px-3 flex items-center gap-x-2 border-white/30 border hover:bg-white/20 hover:ring-2 hover:ring-white/50 transition-all"
+              aria-label="Clear search"
+            >
+              <X className="w-4 h-4" />
+              <span className="text-sm hidden sm:inline">Clear</span>
+            </Button>
           )}
-        </Button>
+          <Button
+            type="button"
+            onClick={handleSearch}
+            disabled={isLoading || !value.trim()}
+            className="h-full bg-black text-white rounded-full px-4 flex items-center gap-x-2 border-white border-2 hover:bg-black/80 hover:ring-2 hover:ring-white/50"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-sm">Searching…</span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4 fill-white" />
+                <span className="text-sm">AI Search</span>
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* AI Response Display - Show recommendations count */}
@@ -231,11 +278,24 @@ export default function AISearch() {
       )} */}
 
       {/* Compact AI summary only (do not display hotel names in hero) */}
-      {(matchedHotels.length > 0 || (typeof totalCount === 'number' && totalCount > 0)) && (
+      {isSearchMode && (
         <div className="mt-3 text-sm text-white/80 bg-black/40 rounded-lg p-3">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 fill-white" />
-            <span className="font-medium">AI found {matchedHotels.length || totalCount} matching hotels. Showing filtered results below.</span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 fill-white" />
+              <span className="font-medium">
+                AI found {matchedHotels.length || aiMatchedHotels.length || totalCount} matching hotels. Showing filtered results below.
+              </span>
+            </div>
+            <Button
+              type="button"
+              onClick={handleClearSearch}
+              variant="ghost"
+              size="sm"
+              className="text-white/70 hover:text-white hover:bg-white/10 h-auto py-1 px-2 text-xs"
+            >
+              Show All Hotels
+            </Button>
           </div>
         </div>
       )}

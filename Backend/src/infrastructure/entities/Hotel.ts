@@ -31,9 +31,21 @@ const hotelSchema = new mongoose.Schema({
     ref: "Review",
     default: [],
   },
+  amenities: {
+    type: [String],
+    default: [],
+  },
   embedding: {
     type: [Number],
     default: [],
+  },
+  stripeProductId: {
+    type: String,
+    required: false,
+  },
+  stripePriceId: {
+    type: String,
+    required: false,
   },
 });
 

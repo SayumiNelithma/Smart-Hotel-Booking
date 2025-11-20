@@ -7,6 +7,7 @@ import hotelsRouter from "./api/hotel";
 import reviewRouter from "./api/review";
 import locationsRouter from "./api/location";
 import bookingRouter from "./api/booking";
+import stripeWebhookRouter from "./api/stripe-webhook";
 import globalErrorHandlingMiddleware from "./api/middleware/global-error-handling-middleware";
 
 import connectDB from "./infrastructure/db";
@@ -14,7 +15,11 @@ import { clerkMiddleware } from "@clerk/express";
 
 const app = express();
 
-// Parse JSON and text payloads
+// Stripe webhook route MUST be before express.json() middleware
+// because it needs raw body for signature verification
+app.use("/api/stripe", stripeWebhookRouter);
+
+// Parse JSON and text payloads (for all other routes)
 app.use(express.json());
 app.use(express.text());
 
@@ -29,10 +34,10 @@ app.use(
 app.use(clerkMiddleware());
 
 // Optional: log every request for debugging
-// app.use((req, res, next) => {
-//   console.log(req.method, req.url);
-//   next();
-// });
+app.use((req, res, next) => {
+  console.log(req.method, req.url);
+  next();
+});
 
 // Mount routers
 app.use("/api/hotels", hotelsRouter);

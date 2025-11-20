@@ -1,11 +1,12 @@
-import { useParams, useNavigate } from "react-router";
-import { useGetBookingByIdQuery } from "@/lib/api";
+import { useParams, useNavigate, useSearchParams } from "react-router";
+import { useGetBookingByIdQuery, useGetBookingBySessionIdQuery } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, Users, CreditCard, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import { useEffect } from "react";
 
 function formatDate(dateString) {
   try {
@@ -21,8 +22,30 @@ function formatDate(dateString) {
 
 function BookingConfirmationPage() {
   const { bookingId } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { data: booking, isLoading, isError, error } = useGetBookingByIdQuery(bookingId);
+  
+  // Get session_id from query params (returned by Stripe)
+  const sessionId = searchParams.get('session_id');
+  
+  // Use session_id if available, otherwise use bookingId from URL
+  const { data: bookingFromSession, isLoading: isLoadingSession, isError: isErrorSession } = 
+    useGetBookingBySessionIdQuery(sessionId || '', { skip: !sessionId });
+  
+  const { data: bookingFromId, isLoading: isLoadingId, isError: isErrorId } = 
+    useGetBookingByIdQuery(bookingId || '', { skip: !bookingId || !!sessionId });
+  
+  // Use booking from session if available, otherwise from bookingId
+  const booking = sessionId ? bookingFromSession : bookingFromId;
+  const isLoading = sessionId ? isLoadingSession : isLoadingId;
+  const isError = sessionId ? isErrorSession : isErrorId;
+  const error = sessionId ? (isErrorSession ? { data: { message: "Failed to load booking" } } : null) : (isErrorId ? { data: { message: "Failed to load booking" } } : null);
+  
+  useEffect(() => {
+    if (sessionId) {
+      toast.success("Payment successful! Loading booking details...");
+    }
+  }, [sessionId]);
 
   if (isLoading) {
     return (
@@ -51,6 +74,8 @@ function BookingConfirmationPage() {
   const getStatusColor = (status) => {
     switch (status) {
       case "CONFIRMED":
+        return "bg-green-100 text-green-800";
+      case "PAID":
         return "bg-green-100 text-green-800";
       case "PENDING":
         return "bg-yellow-100 text-yellow-800";

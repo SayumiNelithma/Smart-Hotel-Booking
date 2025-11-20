@@ -22,7 +22,7 @@ const preMiddleware = (req: Request, res: Response, next: NextFunction) => {
 
 hotelsRouter
   .route("/")
-  .get(getAllHotels)
+  .get(getAllHotels) // Now supports query parameters for filtering
   .post(isAuthenticated, isAdmin, createHotel);
 
 hotelsRouter.route("/ai").post(respondToAIQuery);

@@ -1,6 +1,6 @@
 import Hero from "../components/Hero";
-
 import HotelListings from "../components/HotelListings";
+import PromotionalSection from "../components/PromotionalSection";
 
 function HomePage() {
 
@@ -17,6 +17,7 @@ function HomePage() {
       {/* <Button onClick={() => dispatch(incrementByAmount(5))}>
         <PlusCircle className="w-4 h-4" />
       </Button> */}
+      <PromotionalSection />
       <HotelListings />
     </main>
   );
