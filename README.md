@@ -1,4 +1,4 @@
-# Staycation - Smart Hotel Booking System
+# Horizon: A smart hotel booking platform
 
 A modern, full-stack hotel booking platform featuring AI-powered search, secure payment processing, and a beautiful user interface. Built with React, Node.js, Express, MongoDB, and integrated with Stripe for payments and OpenAI for intelligent hotel recommendations.
 
