@@ -103,8 +103,12 @@ export const api = createApi({
         method: "POST",
         body: booking,
       }),
-      // use the original argument (arg) so we don't reference an undefined variable
-      invalidatesTags: (result, error, arg) => [{ type: "Hotels", id: arg.hotelId }],
+      // Invalidate both Hotels and Bookings cache to ensure new booking appears
+      invalidatesTags: (result, error, arg) => [
+        { type: "Hotels", id: arg.hotelId },
+        { type: "Bookings", id: "LIST" },
+        ...(result?._id ? [{ type: "Bookings", id: result._id }] : []),
+      ],
     }),
     // Admin: get all bookings
     getAllBookings: build.query({

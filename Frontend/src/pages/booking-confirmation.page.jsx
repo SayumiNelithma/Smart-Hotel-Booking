@@ -222,7 +222,10 @@ function BookingConfirmationPage() {
       </div>
 
       <div className="mt-8 flex gap-4 justify-center">
-        <Button onClick={() => navigate("/profile/bookings")} variant="outline">
+        <Button 
+          onClick={() => navigate(`/account/bookings${booking?._id ? `?bookingId=${booking._id}` : ''}`)} 
+          variant="outline"
+        >
           View My Bookings
         </Button>
         <Button onClick={() => navigate("/hotels")}>

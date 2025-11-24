@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router";
 import { useGetMyBookingsQuery, useCancelBookingMutation, useUpdateBookingMutation } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -53,11 +54,39 @@ function getPaymentStatusColor(status) {
 }
 
 export default function ProfileBookingsPage() {
-  const { data: bookings, isLoading, isError, error } = useGetMyBookingsQuery();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const bookingIdParam = searchParams.get('bookingId');
+  const { data: bookings, isLoading, isError, error, refetch } = useGetMyBookingsQuery(undefined, {
+    refetchOnMountOrArgChange: true, // Refetch when component mounts
+  });
   const [cancelBooking] = useCancelBookingMutation();
   const [updateBooking] = useUpdateBookingMutation();
   const [editingBooking, setEditingBooking] = useState(null);
   const [editForm, setEditForm] = useState({});
+  const bookingRefs = useRef({});
+
+  // Scroll to specific booking if bookingId is provided in URL
+  useEffect(() => {
+    if (bookingIdParam && bookings && bookings.length > 0) {
+      const booking = bookings.find(b => b._id === bookingIdParam);
+      if (booking) {
+        // Small delay to ensure DOM is rendered
+        setTimeout(() => {
+          const element = bookingRefs.current[bookingIdParam];
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Highlight the booking briefly
+            element.classList.add('ring-2', 'ring-green-500', 'ring-offset-2');
+            setTimeout(() => {
+              element.classList.remove('ring-2', 'ring-green-500', 'ring-offset-2');
+            }, 3000);
+            // Remove bookingId from URL after scrolling
+            setSearchParams({}, { replace: true });
+          }
+        }, 100);
+      }
+    }
+  }, [bookingIdParam, bookings, setSearchParams]);
 
   const handleCancelBooking = async (bookingId) => {
     if (!window.confirm("Are you sure you want to cancel this booking?")) return;
@@ -123,7 +152,13 @@ export default function ProfileBookingsPage() {
       ) : (
         <div className="grid gap-6">
           {bookings?.map((booking) => (
-            <Card key={booking._id} className="overflow-hidden">
+            <Card 
+              key={booking._id} 
+              ref={(el) => {
+                if (el) bookingRefs.current[booking._id] = el;
+              }}
+              className="overflow-hidden transition-all duration-300"
+            >
               <CardHeader className="pb-4">
                 <div className="flex justify-between items-start">
                   <div>
